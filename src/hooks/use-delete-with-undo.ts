@@ -33,12 +33,19 @@ export function useDeleteWithUndo() {
             // The purge is armed independently of the toast so that closing
             // the tab still gets swept by purgeExpired() on next startup.
             let undone = false;
+            let toastId: string | number | undefined;
+
             const timer = setTimeout(() => {
-              if (!undone) void purgeNode(node.id);
+              if (!undone) {
+                void purgeNode(node.id);
+                // Dismiss the toast so Undo can't be clicked after the node
+                // has already been purged from the database.
+                if (toastId !== undefined) toast.dismiss(toastId);
+              }
             }, UNDO_WINDOW_MS);
 
             const inside = res.affected - 1; // affected counts the node itself
-            toast(`Deleted “${node.name}”`, {
+            toastId = toast(`Deleted "${node.name}"`, {
               description:
                 inside > 0 ? `${inside} item${inside === 1 ? "" : "s"} inside also removed.` : undefined,
               duration: UNDO_WINDOW_MS,
